@@ -12,9 +12,13 @@ other agent  →  implements, tests, ships    (cheap model, executes)
 
 ## Install
 
+**Agent Skills** (any compatible agent):
+
 ```bash
 npx skills add shadcn/improve
 ```
+
+**Claude Code marketplace / plugin:** this repo is a Claude plugin marketplace root (`.claude-plugin/marketplace.json`). Skills load from `skills/improve/`. Add the repository as a marketplace, then install the `improve` plugin — see [Claude Code plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces).
 
 Works in any agent that supports [Agent Skills](https://agentskills.io) format. The plans it writes are plain markdown, so any agent (or human) can pick them up.
 
@@ -40,7 +44,7 @@ A typical first run, start to finish:
 
 1. Open your agent in the repo and run `/improve` (or `/improve quick` to keep it cheap).
 2. It maps the repo, audits it, and comes back with a findings table. Reply with the ones you want planned — "plan 1, 3 and 5".
-3. Plans land in `plans/` — one file each, plus an index with the recommended order. Read them; they're meant to be reviewed.
+3. Plans land in `plans/` (or `advisor-plans/` when `plans/` is already taken for something else) — one file each, plus an index with the recommended order. Read them; they're meant to be reviewed.
 4. Hand a plan to any agent ("implement plans/001-*.md"), or let the skill run it: `/improve execute 001`. It dispatches a cheaper model in an isolated worktree, reviews the diff against the plan, and reports back with a verdict. Merging stays up to you.
 5. Next session, run `/improve reconcile` to clean up the backlog: verify what landed, refresh what drifted, unblock what got stuck.
 
@@ -51,11 +55,10 @@ Before a PR, `/improve branch` does the same thing scoped to just what your bran
 A run against [shadcn/ui](https://github.com/shadcn-ui/ui) came back with findings like:
 
 ```
-| # | Finding                                        | Category  | Effort | Confidence |
-|---|------------------------------------------------|-----------|--------|------------|
-| 1 | shadow-config duplicated in search.ts/view.ts, | tech-debt | M      | HIGH       |
-|   | copies already drifted (TODO at search.ts:31)  |           |        |            |
-| 2 | O(n²) icon migration (migrate-icons.ts:168)    | perf      | S      | HIGH       |
+| # | Finding | Category | Impact | Effort | Risk | Evidence |
+|---|----------|----------|--------|--------|------|----------|
+| 1 | shadow-config duplicated in search.ts/view.ts; copies already drifted (TODO at search.ts:31) | tech-debt | Future partial-config changes must be made twice; copies already diverged | M | LOW | search.ts / view.ts shadow-config blocks |
+| 2 | O(n²) icon migration (migrate-icons.ts:168) | perf | Slow icon migrations on large trees | S | LOW | migrate-icons.ts:168 |
 ```
 
 …and rejected a few, with reasons recorded so they don't come back next run:
@@ -99,10 +102,24 @@ Plans aren't fire-and-forget:
 
 ## Hard rules
 
-- Never modifies source code itself. The only writes go to `plans/`; executors edit only in disposable worktrees, and merging is always yours.
+- Never modifies source code itself. The only writes go to `plans/` (or `advisor-plans/` when `plans/` already exists for an unrelated purpose); executors edit only in disposable worktrees, and merging is always yours.
 - Never runs commands that mutate your working tree — read, search, and read-only analysis only.
 - Never reproduces secret values. Locations and credential types only, rotation always recommended.
 - Asked to implement? It declines and points at the plan (or offers `execute`).
+
+## Development
+
+```bash
+./scripts/verify-skill.sh
+```
+
+Structural checks for skill docs (links, findings-table columns, output-dir wiring, marketplace install notes).
+
+```bash
+./scripts/test-verify-skill.sh
+```
+
+Self-tests for the script above — proves each check still detects its fault class. See [VALIDATION.md](./VALIDATION.md).
 
 ## License
 

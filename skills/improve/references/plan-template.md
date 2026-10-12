@@ -8,7 +8,9 @@ Three properties make a plan executable by a weaker model:
 2. **Verification gates** — every step ends with a command and its expected result. The executor never has to *judge* whether it succeeded.
 3. **Hard boundaries and escape hatches** — explicit out-of-scope list, and "STOP and report" conditions instead of letting the model improvise when reality doesn't match the plan.
 
-File naming: `plans/NNN-short-slug.md`, numbered in recommended execution order.
+**Plans root:** write under `plans/` unless the advisor selected `advisor-plans/` (when `plans/` is taken for an unrelated purpose). Below, `plans/` means that chosen root — so if the root is `advisor-plans/`, file naming is `advisor-plans/NNN-short-slug.md` and the index is `advisor-plans/README.md`.
+
+File naming: `plans/NNN-short-slug.md` (default root), numbered in recommended execution order.
 
 ---
 
@@ -133,7 +135,7 @@ Machine-checkable. ALL must hold:
 - [ ] `pnpm test` exits 0; new tests for <X> exist and pass
 - [ ] `grep -rn "<old pattern>" src/` returns no matches
 - [ ] No files outside the in-scope list are modified (`git status`)
-- [ ] `plans/README.md` status row updated
+- [ ] `<plans-root>/README.md` status row updated (default `plans/README.md`)
 
 ## STOP conditions
 
@@ -157,9 +159,9 @@ For the human/agent who owns this code after the change lands:
 
 ---
 
-## Index file: `plans/README.md`
+## Index file: `plans/README.md` (or `advisor-plans/README.md`)
 
-Written once by the advisor after all plans, updated by executors:
+Written once by the advisor after all plans, updated by executors. Path is under the **plans root** (see above):
 
 ```markdown
 # Implementation Plans
