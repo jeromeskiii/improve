@@ -85,6 +85,32 @@ exit 1
 Exactly one case fails, and it is the MED-1 regression case. Every other case
 passes on both versions, which is the correct result: MED-1 was the only defect.
 
+#### Reproducing the mutation test
+
+The pre-fix verifier was never itself committed (`scripts/` was untracked, which
+is what MED-2 was about), so there is no `git show` that recovers it. Recreate it
+by reverting check 3 to its original shape in a scratch copy:
+
+```bash
+d=$(mktemp -d) && tar --exclude='.git' -cf - . | tar -xf - -C "$d"
+python3 - "$d" <<'PY'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1]) / "scripts/verify-skill.sh"
+s = p.read_text()
+new = s[s.index("ref_links="):s.index('ok "SKILL relative reference links resolve')]
+old = """while IFS= read -r rel; do
+  target="skills/improve/${rel}"
+  [[ -f "$target" ]] || fail "SKILL links to missing file: $rel (expected $target)"
+done < <(grep -oE '\\]\\(references/[^)]+\\.md\\)' skills/improve/SKILL.md | sed 's/](\\(.*\\))/\\1/' | sort -u)
+"""
+p.write_text(s.replace(new, old))
+PY
+"$d/scripts/test-verify-skill.sh"; echo "exit=$?"   # expect: 13 passed / 1 failed
+```
+
+Expected terminal line:
+`test-verify-skill: passed=13 failed=1 skipped=0 blocked=0`, exit 1.
+
 ---
 
 ## 3. Test results
